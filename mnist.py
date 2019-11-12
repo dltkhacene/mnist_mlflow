@@ -21,13 +21,10 @@ def train(args, model, train_loader, optimizer, epoch):
         loss.backward()
         optimizer.step()
         if batch_idx % 100 == 0:
+            accuracy = 100.0 * batch_idx / len(train_loader)
             print(
                 "Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}".format(
-                    epoch,
-                    batch_idx * len(data),
-                    len(train_loader.dataset),
-                    100.0 * batch_idx / len(train_loader),
-                    loss.item(),
+                    epoch, batch_idx * len(data), len(train_loader.dataset), accuracy, loss.item()
                 )
             )
 
@@ -44,10 +41,10 @@ def test(args, model, test_loader):
             correct += pred.eq(target.view_as(pred)).sum().item()
 
     test_loss /= len(test_loader.dataset)
-
+    test_accuracy = 100.0 * correct / len(test_loader.dataset)
     print(
         "\nTest set: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)\n".format(
-            test_loss, correct, len(test_loader.dataset), 100.0 * correct / len(test_loader.dataset)
+            test_loss, correct, len(test_loader.dataset), test_accuracy
         )
     )
 
@@ -70,11 +67,7 @@ def main():
         help="input batch size for testing (default: 1000)",
     )
     parser.add_argument(
-        "--epochs",
-        type=int,
-        default=5,
-        metavar="N",
-        help="number of epochs to train (default: 10)",
+        "--epochs", type=int, default=5, metavar="N", help="number of epochs to train (default: 10)"
     )
     parser.add_argument(
         "--lr", type=float, default=1.0, metavar="LR", help="learning rate (default: 1.0)"
@@ -120,7 +113,8 @@ def main():
         scheduler.step()
 
     if args.save_model:
-        torch.save(model.state_dict(), "mnist_cnn.pt")
+        model_path = "mnist_cnn.pt"
+        torch.save(model.state_dict(), model_path)
 
 
 if __name__ == "__main__":
