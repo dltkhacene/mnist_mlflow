@@ -3,6 +3,7 @@ from __future__ import print_function
 import argparse
 import functools
 
+import mlflow
 import torch
 import torch.nn.functional as F
 import torch.optim as optim
@@ -22,6 +23,7 @@ def train(args, model, train_loader, optimizer, epoch):
         optimizer.step()
         if batch_idx % 100 == 0:
             accuracy = 100.0 * batch_idx / len(train_loader)
+            mlflow.log_metrics({"train_loss": loss.item(), "train_accuracy": loss.item()})
             print(
                 "Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}".format(
                     epoch, batch_idx * len(data), len(train_loader.dataset), accuracy, loss.item()
@@ -42,6 +44,7 @@ def test(args, model, test_loader):
 
     test_loss /= len(test_loader.dataset)
     test_accuracy = 100.0 * correct / len(test_loader.dataset)
+    mlflow.log_metrics({"test_loss": test_loss, "test_accuracy": test_accuracy})
     print(
         "\nTest set: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)\n".format(
             test_loss, correct, len(test_loader.dataset), test_accuracy
@@ -81,6 +84,8 @@ def main():
     )
     parser.add_argument("--seed", type=int, default=1, metavar="S", help="random seed (default: 1)")
 
+    parser.add_argument("--run-name", type=str, default=None, help="Mlflow run name.")
+
     parser.add_argument(
         "--save-model", action="store_true", default=False, help="For Saving the current Model"
     )
@@ -107,14 +112,18 @@ def main():
     optimizer = optim.Adadelta(model.parameters(), lr=args.lr)
 
     scheduler = StepLR(optimizer, step_size=1, gamma=args.gamma)
-    for epoch in range(1, args.epochs + 1):
-        train(args, model, train_loader, optimizer, epoch)
-        test(args, model, test_loader)
-        scheduler.step()
+    mlflow.set_experiment("MNIST CNN")
+    with mlflow.start_run(run_name=args.run_name):
+        mlflow.log_params(vars(args))
+        for epoch in range(1, args.epochs + 1):
+            train(args, model, train_loader, optimizer, epoch)
+            test(args, model, test_loader)
+            scheduler.step()
 
-    if args.save_model:
-        model_path = "mnist_cnn.pt"
-        torch.save(model.state_dict(), model_path)
+        if args.save_model:
+            model_path = "mnist_cnn.pt"
+            torch.save(model.state_dict(), model_path)
+        mlflow.log_artifact(model_path)
 
 
 if __name__ == "__main__":
