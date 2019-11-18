@@ -23,7 +23,7 @@ def train(args, model, train_loader, optimizer, epoch):
         optimizer.step()
         if batch_idx % 100 == 0:
             accuracy = 100.0 * batch_idx / len(train_loader)
-            mlflow.log_metrics({"train_loss": loss.item(), "train_accuracy": loss.item()})
+            mlflow.log_metrics({"train_loss": loss.item(), "train_accuracy": accuracy})
             print(
                 "Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}".format(
                     epoch, batch_idx * len(data), len(train_loader.dataset), accuracy, loss.item()
@@ -70,7 +70,7 @@ def main():
         help="input batch size for testing (default: 1000)",
     )
     parser.add_argument(
-        "--epochs", type=int, default=5, metavar="N", help="number of epochs to train (default: 10)"
+        "--epochs", type=int, default=5, metavar="N", help="number of epochs to train (default: 5)"
     )
     parser.add_argument(
         "--lr", type=float, default=1.0, metavar="LR", help="learning rate (default: 1.0)"
