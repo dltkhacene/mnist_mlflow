@@ -22,7 +22,9 @@ def train(args, model, train_loader, optimizer, epoch):
         loss.backward()
         optimizer.step()
         if batch_idx % 100 == 0:
-            accuracy = 100.0 * batch_idx / len(train_loader)
+            pred = output.argmax(dim=1, keepdim=True)  # get the index of the max log-probability
+            correct = pred.eq(target.view_as(pred)).sum().item()
+            accuracy = 100.0 * correct / len(pred)
             mlflow.log_metrics({"train_loss": loss.item(), "train_accuracy": accuracy})
             print(
                 "Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}".format(
